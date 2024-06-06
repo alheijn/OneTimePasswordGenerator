@@ -125,6 +125,7 @@ public class MainActivity extends AppCompatActivity {
             // Add the UID and the current time to the OTP data
             otpData.put((byte) uid);
             otpData.putLong(now);
+            otpData.put((byte) interval);
             // Add the OTP length to the OTP data
             byte[] otpBytes = Arrays.copyOfRange(otpData.array(), 0, otpLength + 9); // Adjust the range
             try {
@@ -132,14 +133,31 @@ public class MainActivity extends AppCompatActivity {
                 if (encodingSwitch.isChecked()) {
                     // Use Base64 encoding
                     String base64Otp = Base64.encodeToString(encrypted, Base64.DEFAULT);
-                    return base64Otp;
+
+                    return uid+"|"+otpLength+"|"+interval+"|"+base64Otp.substring(base64Otp.length() - otpLength-1);
                 } else {
                     // Use hexadecimal encoding
                     StringBuilder hexString = new StringBuilder();
-                    for (byte b : encrypted) {
-                        hexString.append(Integer.toHexString(0xFF & b));
+                    for (int i = encrypted.length - 1; i >= encrypted.length - otpLength; i--) {
+                        hexString.append(Integer.toHexString(0xFF & encrypted[i]));
                     }
-                    return hexString.toString();
+                    hexString.reverse();
+
+                    hexString.insert(0, "|");
+                    hexString.insert(0, interval);
+                    hexString.insert(0, "|");
+                    hexString.insert(0, otpLength);
+                    hexString.insert(0, "|");
+                    hexString.insert(0, uid);
+
+
+                    // String format: uid|otpLength|interval|otp
+
+//                    for (byte b : encrypted) {
+//                        hexString.append(Integer.toHexString(0xFF & b));
+//                    }
+                    String otpString = hexString.toString();
+                    return otpString;
                 }
 
                 // TODO: Implement Base58 encoding istead of Base64
