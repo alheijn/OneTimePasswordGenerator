@@ -89,11 +89,8 @@ public class MainActivity extends AppCompatActivity {
             run = true;
             try {
                 // Initialize the AES cipher
-                // initial copilot suggestion: use ECB mode, which however is insecure!
-                // aes = Cipher.getInstance("AES/ECB/PKCS5Padding");
-
-                // secure alternative: use CBC mode
-                aes = Cipher.getInstance("AES/CBC/PKCS5Padding");
+                // use AES encryption with ECB mode and no padding --> will produce the same result as the "server"
+                aes = Cipher.getInstance("AES/ECB/NoPadding");
                 SecretKeySpec aesKey = new SecretKeySpec(key, "AES");
                 aes.init(Cipher.ENCRYPT_MODE, aesKey);
             } catch (Exception e) {
@@ -121,13 +118,23 @@ public class MainActivity extends AppCompatActivity {
         private String generateOTP() {
             long now = System.currentTimeMillis() / 1000;
             // Create a ByteBuffer to store the OTP data
-            ByteBuffer otpData = ByteBuffer.allocate(otpLength + 9);
+            ByteBuffer otpData = ByteBuffer.allocate(16);
             // Add the UID and the current time to the OTP data
-            otpData.put((byte) uid);
-            otpData.putLong(now);
-            otpData.put((byte) interval);
-            // Add the OTP length to the OTP data
-            byte[] otpBytes = Arrays.copyOfRange(otpData.array(), 0, otpLength + 9); // Adjust the range
+            otpData.put((byte) uid);        // 1 byte
+            otpData.put((byte)otpLength);   // 1 byte
+            otpData.put((byte) interval);   // 1 byte
+            otpData.putLong(now);           // 8 bytes
+            // in sum: 1 + 1 + 1 + 8 = 11 bytes
+
+            // Add padding to the OTP data (5 bytes)
+            otpData.put((byte) 255);
+            otpData.put((byte) 255);
+            otpData.put((byte) 255);
+            otpData.put((byte) 255);
+            otpData.put((byte) 255);
+
+            byte[] otpBytes = otpData.array();
+
             try {
                 byte[] encrypted = aes.doFinal(otpBytes);
                 if (encodingSwitch.isChecked()) {
