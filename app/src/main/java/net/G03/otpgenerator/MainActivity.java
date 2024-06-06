@@ -1,6 +1,8 @@
 package net.G03.otpgenerator;
 
 
+import android.app.KeyguardManager;
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Base64;
 import android.widget.Button;
@@ -36,6 +38,15 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        KeyguardManager keyguardManager = (KeyguardManager) getSystemService(KEYGUARD_SERVICE);
+
+        if (keyguardManager.isKeyguardSecure()) {
+            Intent intent = keyguardManager.createConfirmDeviceCredentialIntent("Authentication required", "Please enter your PIN");
+            startActivityForResult(intent, 1);
+        } else {
+            Toast.makeText(this, "No lock screen security found.", Toast.LENGTH_SHORT).show();
+        }
 
         // Initialize the views
         otpTextView = findViewById(R.id.otpTextView);
@@ -74,6 +85,19 @@ public class MainActivity extends AppCompatActivity {
                 startStopButton.setText("Start");
             }
         });
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == 1) {
+            if (resultCode == RESULT_OK) {
+                Toast.makeText(this, "Authentication successful", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "Authentication failed", Toast.LENGTH_SHORT).show();
+            }
+        }
     }
 
     class Generator extends Thread {
