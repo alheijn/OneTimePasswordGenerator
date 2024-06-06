@@ -68,7 +68,11 @@ public class MainActivity extends AppCompatActivity {
             run = true;
             try {
                 // Initialize the AES cipher
-                aes = Cipher.getInstance("AES/ECB/PKCS5Padding");
+                // initial copilot suggestion: use ECB mode, which however is insecure!
+                // aes = Cipher.getInstance("AES/ECB/PKCS5Padding");
+
+                // secure alternative: use CBC mode
+                aes = Cipher.getInstance("AES/CBC/PKCS5Padding");
                 SecretKeySpec aesKey = new SecretKeySpec(key, "AES");
                 aes.init(Cipher.ENCRYPT_MODE, aesKey);
             } catch (Exception e) {
