@@ -90,7 +90,7 @@ public class MainActivity extends AppCompatActivity {
             try {
                 // Initialize the AES cipher
                 // use AES encryption with ECB mode and no padding --> will produce the same result as the "server"
-                aes = Cipher.getInstance("AES/ECB/PKCS5Padding");
+                aes = Cipher.getInstance("AES/ECB/NoPadding");
                 SecretKeySpec aesKey = new SecretKeySpec(key, "AES");
                 aes.init(Cipher.ENCRYPT_MODE, aesKey);
             } catch (Exception e) {
@@ -127,6 +127,8 @@ public class MainActivity extends AppCompatActivity {
             // in sum: 1 + 1 + 1 + 8 = 11 bytes
 
             // Add padding to the OTP data (at least 5 bytes) --> done automatically by PKCS5Padding
+            otpData.put(new byte[5]);       // 5 bytes
+
 
             byte[] otpBytes = otpData.array();
 
