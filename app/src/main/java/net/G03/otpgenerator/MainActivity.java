@@ -126,12 +126,7 @@ public class MainActivity extends AppCompatActivity {
             otpData.putLong(now);           // 8 bytes
             // in sum: 1 + 1 + 1 + 8 = 11 bytes
 
-            // Add padding to the OTP data (5 bytes)
-//            otpData.put((byte) 255);
-//            otpData.put((byte) 255);
-//            otpData.put((byte) 255);
-//            otpData.put((byte) 255);
-//            otpData.put((byte) 255);
+            // Add padding to the OTP data (at least 5 bytes) --> done automatically by PKCS5Padding
 
             byte[] otpBytes = otpData.array();
 
