@@ -1,9 +1,11 @@
 package net.G03.otpgenerator;
 
 import android.os.Bundle;
+import android.util.Base64;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Switch;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -24,6 +26,8 @@ public class MainActivity extends AppCompatActivity {
     private EditText otpLengthEditText;
     private Button startStopButton;
     private Generator countdown;
+    private Switch encodingSwitch; // Add this line
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,6 +39,7 @@ public class MainActivity extends AppCompatActivity {
         otpValidityEditText = findViewById(R.id.otpValidityEditText);
         otpLengthEditText = findViewById(R.id.otpLengthEditText);
         startStopButton = findViewById(R.id.startStopButton);
+        encodingSwitch = findViewById(R.id.encodingSwitch); // Add this line
 
         // Set an OnClickListener for the start/stop button
         startStopButton.setOnClickListener(v -> {
@@ -116,20 +121,28 @@ public class MainActivity extends AppCompatActivity {
         private String generateOTP() {
             long now = System.currentTimeMillis() / 1000;
             // Create a ByteBuffer to store the OTP data
-            ByteBuffer otpData = ByteBuffer.allocate(otpLength + 3);
+            ByteBuffer otpData = ByteBuffer.allocate(otpLength + 9);
             // Add the UID and the current time to the OTP data
             otpData.put((byte) uid);
             otpData.putLong(now);
             // Add the OTP length to the OTP data
-            byte[] otpBytes = Arrays.copyOfRange(otpData.array(), 0, otpLength + 3);
+            byte[] otpBytes = Arrays.copyOfRange(otpData.array(), 0, otpLength + 9); // Adjust the range
             try {
-                // Encrypt the OTP data and convert it to a hex string
                 byte[] encrypted = aes.doFinal(otpBytes);
-                StringBuilder hexString = new StringBuilder();
-                for (byte b : encrypted) {
-                    hexString.append(Integer.toHexString(0xFF & b));
+                if (encodingSwitch.isChecked()) {
+                    // Use Base64 encoding
+                    String base64Otp = Base64.encodeToString(encrypted, Base64.DEFAULT);
+                    return base64Otp;
+                } else {
+                    // Use hexadecimal encoding
+                    StringBuilder hexString = new StringBuilder();
+                    for (byte b : encrypted) {
+                        hexString.append(Integer.toHexString(0xFF & b));
+                    }
+                    return hexString.toString();
                 }
-                return hexString.toString();
+
+                // TODO: Implement Base58 encoding istead of Base64
             } catch (Exception e) {
                 e.printStackTrace();
             }
