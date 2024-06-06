@@ -1,21 +1,24 @@
 package net.G03.otpgenerator;
 
+
 import android.os.Bundle;
 import android.util.Base64;
-import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Switch;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.Socket;
 import java.nio.ByteBuffer;
-import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
 
 import javax.crypto.Cipher;
-import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.SecretKeySpec;
 
 public class MainActivity extends AppCompatActivity {
@@ -26,7 +29,7 @@ public class MainActivity extends AppCompatActivity {
     private EditText otpLengthEditText;
     private Button startStopButton;
     private Generator countdown;
-    private Switch encodingSwitch; // Add this line
+    private Switch encodingSwitch;
 
 
     @Override
@@ -39,7 +42,8 @@ public class MainActivity extends AppCompatActivity {
         otpValidityEditText = findViewById(R.id.otpValidityEditText);
         otpLengthEditText = findViewById(R.id.otpLengthEditText);
         startStopButton = findViewById(R.id.startStopButton);
-        encodingSwitch = findViewById(R.id.encodingSwitch); // Add this line
+        encodingSwitch = findViewById(R.id.encodingSwitch);
+
 
         // Set an OnClickListener for the start/stop button
         startStopButton.setOnClickListener(v -> {
@@ -103,6 +107,9 @@ public class MainActivity extends AppCompatActivity {
                 String otp = null;
                 otp = generateOTP();
                 if (otp == null) return;
+
+                sendOtpToServer(otp); // send the OTP to the server
+
                 String finalOtp = otp;
                 // Update the OTP TextView on the UI thread
                 runOnUiThread(() -> otpTextView.setText(finalOtp));
@@ -136,9 +143,9 @@ public class MainActivity extends AppCompatActivity {
                 byte[] encrypted = aes.doFinal(otpBytes);
                 if (encodingSwitch.isChecked()) {
                     // Use Base64 encoding
-                    String base64Otp = Base64.encodeToString(encrypted, Base64.DEFAULT);
+                    String base64Otp = Base64.encodeToString(encrypted, Base64.NO_WRAP);
 
-                    return uid+"|"+otpLength+"|"+interval+"|"+base64Otp.substring(base64Otp.length() - otpLength-1);
+                    return "0|"+uid+"|"+otpLength+"|"+interval+"|"+base64Otp.substring(base64Otp.length() - otpLength-1);
                 } else {
                     // Use hexadecimal encoding
                     StringBuilder hexString = new StringBuilder();
@@ -153,6 +160,7 @@ public class MainActivity extends AppCompatActivity {
                     hexString.insert(0, otpLength);
                     hexString.insert(0, "|");
                     hexString.insert(0, uid);
+                    hexString.insert(0, "1|");
 
 
                     // String format: uid|otpLength|interval|otp
@@ -176,4 +184,32 @@ public class MainActivity extends AppCompatActivity {
             run = false;
         }
     }
+
+    private void sendOtpToServer(String otp) {
+        new Thread(() -> {
+            try {
+                Socket socket = new Socket("10.0.2.2", 12345); // replace "server_ip" with your server's IP address
+                PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+                BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+
+                out.println(otp); // send the OTP to the server
+
+                String response = in.readLine(); // read the server's response
+
+                runOnUiThread(() -> {
+                    // assuming you have a TextView named serverResponseTextView to display the server's response
+                    // TextView serverResponseTextView = findViewById(R.id.serverResponseTextView);
+                    // serverResponseTextView.setText(response);
+
+                    // Display server response in a toast
+                    Toast.makeText(this, response, Toast.LENGTH_SHORT).show();
+                });
+
+                socket.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }).start();
+    }
+
 }
