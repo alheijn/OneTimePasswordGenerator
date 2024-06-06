@@ -40,8 +40,20 @@ public class MainActivity extends AppCompatActivity {
         startStopButton.setOnClickListener(v -> {
             // If the button text is "Start", start the OTP generation
             if (startStopButton.getText().toString().equals("Start")) {
-                int interval = Integer.parseInt(otpValidityEditText.getText().toString());
-                countdown = new Generator(interval);
+                int interval;
+                int otpLength;
+                // Check if the EditText fields are empty
+                if (otpValidityEditText.getText().toString().isEmpty()) {
+                    interval = 45; // Default value
+                } else {
+                    interval = Integer.parseInt(otpValidityEditText.getText().toString());
+                }
+                if (otpLengthEditText.getText().toString().isEmpty()) {
+                    otpLength = 6; // Default value
+                } else {
+                    otpLength = Integer.parseInt(otpLengthEditText.getText().toString());
+                }
+                countdown = new Generator(interval, otpLength);
                 countdown.start();
                 startStopButton.setText("Stop");
             } else {
@@ -58,13 +70,17 @@ public class MainActivity extends AppCompatActivity {
     class Generator extends Thread {
         private volatile boolean run = true;
         private int interval;
+        private int otpLength; // OTP length
+
         // hard coded key for demonstration purposes
         private byte[] key = "1234567890123456".getBytes(); // 128 bit key
         private int uid = 0; // User ID
         private Cipher aes;
 
-        public Generator(int interval) {
+        public Generator(int interval, int otpLength) {
             this.interval = interval;
+            this.otpLength = otpLength; // Set the OTP length
+
             run = true;
             try {
                 // Initialize the AES cipher
@@ -99,10 +115,12 @@ public class MainActivity extends AppCompatActivity {
 
         private String generateOTP() {
             long now = System.currentTimeMillis() / 1000;
-            int otpLength = Integer.parseInt(otpLengthEditText.getText().toString());
+            // Create a ByteBuffer to store the OTP data
             ByteBuffer otpData = ByteBuffer.allocate(otpLength + 3);
+            // Add the UID and the current time to the OTP data
             otpData.put((byte) uid);
             otpData.putLong(now);
+            // Add the OTP length to the OTP data
             byte[] otpBytes = Arrays.copyOfRange(otpData.array(), 0, otpLength + 3);
             try {
                 // Encrypt the OTP data and convert it to a hex string
