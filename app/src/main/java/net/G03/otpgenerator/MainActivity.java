@@ -5,6 +5,7 @@ import android.app.KeyguardManager;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Base64;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Switch;
@@ -39,6 +40,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+
         KeyguardManager keyguardManager = (KeyguardManager) getSystemService(KEYGUARD_SERVICE);
 
         if (keyguardManager.isKeyguardSecure()) {
@@ -49,10 +51,10 @@ public class MainActivity extends AppCompatActivity {
         }
 
         // Initialize the views
+        startStopButton = findViewById(R.id.startStopButton);
         otpTextView = findViewById(R.id.otpTextView);
         otpValidityEditText = findViewById(R.id.otpValidityEditText);
         otpLengthEditText = findViewById(R.id.otpLengthEditText);
-        startStopButton = findViewById(R.id.startStopButton);
         encodingSwitch = findViewById(R.id.encodingSwitch);
 
 
@@ -96,6 +98,7 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(this, "Authentication successful", Toast.LENGTH_SHORT).show();
             } else {
                 Toast.makeText(this, "Authentication failed", Toast.LENGTH_SHORT).show();
+                startStopButton.setVisibility(View.GONE);
             }
         }
     }
