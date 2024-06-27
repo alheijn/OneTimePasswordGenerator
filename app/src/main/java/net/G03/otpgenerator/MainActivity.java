@@ -105,12 +105,9 @@ public class MainActivity extends AppCompatActivity {
 
     class Generator extends Thread {
         private volatile boolean run = true;
-        private int interval;
-        private int otpLength; // OTP length
+        private final int interval;
+        private final int otpLength; // OTP length
 
-        // hard coded key for demonstration purposes
-        private byte[] key = "1234567890123456".getBytes(); // 128 bit key
-        private int uid = 0; // User ID
         private Cipher aes;
 
         public Generator(int interval, int otpLength) {
@@ -122,6 +119,9 @@ public class MainActivity extends AppCompatActivity {
                 // Initialize the AES cipher
                 // use AES encryption with ECB mode and no padding --> will produce the same result as the "server"
                 aes = Cipher.getInstance("AES/ECB/NoPadding");
+                // hard coded key for demonstration purposes
+                // 128 bit key
+                byte[] key = "1234567890123456".getBytes();
                 SecretKeySpec aesKey = new SecretKeySpec(key, "AES");
                 aes.init(Cipher.ENCRYPT_MODE, aesKey);
             } catch (Exception e) {
@@ -129,6 +129,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
+        @Override
         public void run() {
             while (run) {
                 String otp = null;
@@ -154,6 +155,7 @@ public class MainActivity extends AppCompatActivity {
             // Create a ByteBuffer to store the OTP data
             ByteBuffer otpData = ByteBuffer.allocate(16);
             // Add the UID and the current time to the OTP data
+            int uid = 0;
             otpData.put((byte) uid);        // 1 byte
             otpData.put((byte)otpLength);   // 1 byte
             otpData.put((byte) interval);   // 1 byte
@@ -163,7 +165,6 @@ public class MainActivity extends AppCompatActivity {
             // Add padding to the OTP data (at least 5 bytes) --> done automatically by PKCS5Padding
             otpData.put(new byte[5]);       // 5 bytes
 
-
             byte[] otpBytes = otpData.array();
 
             try {
@@ -172,7 +173,7 @@ public class MainActivity extends AppCompatActivity {
                     // Use Base64 encoding
                     String base64Otp = Base64.encodeToString(encrypted, Base64.NO_WRAP);
 
-                    return "0|"+uid+"|"+otpLength+"|"+interval+"|"+base64Otp.substring(base64Otp.length() - otpLength-1);
+                    return "0|"+ uid +"|"+otpLength+"|"+interval+"|"+base64Otp.substring(base64Otp.length() - otpLength-1);
                 } else {
                     // Use hexadecimal encoding
                     StringBuilder hexString = new StringBuilder();
@@ -191,15 +192,9 @@ public class MainActivity extends AppCompatActivity {
 
 
                     // String format: uid|otpLength|interval|otp
-
-//                    for (byte b : encrypted) {
-//                        hexString.append(Integer.toHexString(0xFF & b));
-//                    }
-                    String otpString = hexString.toString();
-                    return otpString;
+                    return hexString.toString();
                 }
 
-                // TODO: Implement Base58 encoding istead of Base64
             } catch (Exception e) {
                 e.printStackTrace();
             }
